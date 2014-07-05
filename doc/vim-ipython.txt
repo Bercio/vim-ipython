@@ -1,0 +1,260 @@
+*vim-ipython.txt*	For Vim version 7.4	Last change: 2014 July 5
+
+Using this plugin, you can send lines or whole files for IPython to
+execute, and also get back object introspection and word completions in
+Vim, like what you get with: `object?<enter>` and `object.<tab>` in
+IPython.
+
+REQUIREMENTS					 *vim-ipython-requirements*
+ 
+* Vim 7.4
+
+* Python2 support.
+
+* IPython versions 0.11.x, 0.12.x, 0.13.x, 1.x and 2.x
+
+If you can launch `ipython qtconsole` or `ipython kernel`, and
+`:echo has('python')` returns 1 in vim, you should be good to go.
+
+INSTALLATION					*vim-ipython-installation*
+
+The plugin follows the usual bundle structure, so it's easy to install it
+using pathogen, Vundle or NeoBundle.
+
+The most recent version is available at github. For those who need it, a
+tarball is available from here.
+
+QUICKSTART					*vim-ipython-quickstart*
+
+Start `ipython qtconsole`. Source `ipy.vim` file, which provides new
+IPython command:
+>
+  :source ipy.vim
+  (or copy it to ~/.vim/ftplugin/python to load automatically)
+
+  :IPython
+
+The `:IPython` command allows you to put the full connection string. For
+IPython 0.11, it would look like this:
+>
+  :IPython --existing --shell=41882 --iopub=43286 --stdin=34987 --hb=36697
+
+and for IPython 0.12 through IPython 2.0 like this:
+>
+  :IPython --existing kernel-85997.json
+
+There also exists to convenience commands: `:IPythonClipboard` just uses the
+'+' register to get the connection string, whereas `:IPythonXSelection`
+uses the '*' register and passes it to `:IPython`.
+
+NEW in IPython 2.0~
+
+vim-ipython can now interoperate with non-Python kernels.
+
+NEW in IPython 0.12~
+
+Since IPython 0.12, you can simply use:
+>
+  :IPython
+
+without arguments to connect to the most recent IPython session (this is the
+same as passing just the `--existing` flag to `ipython qtconsole` and
+`ipython console`.
+
+Note: Though the demos above use `qtconsole`, it is not required for this
+workflow, it's just that it was the easiest way to show how to make use of the
+new functionality in 0.11 release. Since IPython 0.12, you can use `ipython
+kernel` to create a kernel and get the connection string to use for any
+frontend (including vim-ipython), or use `ipython console` to create a kernel
+and immediately connect to it using a terminal-based client. You can even
+connect to an active IPython Notebook kernel - just watch for the connection
+string that gets printed when you open the notebook, or use the
+`%connect_info` magic to get the connection string.  If you are still using
+0.11, you can launch a regular kernel using `python -c "from
+IPython.zmq.ipkernel import main; main()"`
+
+SENDING LINES						*vim-ipython-lines*
+
+Type out a line and send it to IPython using <CTRL-S> from Command mode:
+>
+  import os
+
+You should see a notification message confirming the line was sent, along
+with the input number for the line, like so `In[1]: import os`. If
+<CTRL-S> did **not** work, see |vim-ipython-issues| for a
+work-around.
+
+<CTRL-S> also works from insert mode, but doesn't show notification,
+unless 'monitor_subchannel' is set to `True` (see |vim-ipython-shell|
+below)
+
+It also works blockwise in Visual Mode. Select and send these lines using
+<CTRL-S>:
+>
+  import this,math # secret decoder ring
+  a,b,c,d,e,f,g,h,i = range(1,10)
+  code =(c,a,d,a,e,i,)
+  msg = '...jrer nyy frag sebz Ivz.\nIvz+VClguba=%fyl '+this.s.split()[g]
+  decode=lambda x:"\n"+"".join([this.d.get(c,c) for c in x])+"!"
+  format=lambda x:'These lines:\n  '+'\n  '.join([l for l in x.splitlines()])
+  secret_decoder = lambda a,b: format(a)+decode(msg)%str(b)[:-1]
+  '%d'*len(code)%code == str(int(math.pi*1e5))
+
+Then, go to the qtconsole and run this line:
+>
+  print secret_decoder(_i,_)
+
+You can also send whole files to IPython's `%run` magic using <F5>.
+
+NEW in IPython 0.12~
+
+If you're trying to do run code fragments that have leading whitespace, use
+<ALT-S> instead - it will dedent a single line, and remove the leading
+whitespace of the first line from all lines in a visual mode selection.
+
+IPYTHON DOCUMENTATION FUNCTIONALITY			 *vim-ipython-info*
+
+If you're using gvim, mouse-over a variable to see IPython's `?` equivalent.
+If you're using vim from a terminal, or want to copy something from the
+docstring, type <Leader>d. This will open a quickpreview window, which can 
+be closed by hitting q or <ESC>. 
+
+IPYTHON TAB-COMPLETION FUNCTIONALITY		*vim-ipython-completion*
+
+|vim-ipython| activates a 'completefunc' that queries IPython.
+A completefunc is activated using <CTRL-X><CTRL-U> in Insert Mode.
+You can combine this functionality with SuperTab to get tab completion.
+
+VIM-IPYTHON SHELL					*vim-ipython-shell*
+
+By monitoring `km.sub_channel`, we can recreate what messages were sent to
+IPython, and what IPython sends back in response.
+
+`monitor_subchannel` is a parameter that sets whether this "shell" should
+updated on every sent command (default: `True`).
+
+If at any later time you wish to bring this shell up, including if you've set
+`monitor_subchannel=False`, hit <Leader>s.
+
+NEW since IPython 0.12~
+
+For local kernels (kernels running on the same machine as vim), <CTRL-C> in
+the vim-ipython "shell" sends a keyboard interrupt. 
+(Note: this feature may not work on Windows, please report the issue to ).
+
+OPTIONS							*vim-ipython-options*
+
+You can change these at the top of the ipy.vim:
+>
+  reselect = False            # reselect lines after sending from Visual mode
+  show_execution_count = True # wait to get numbers for In[43]: feedback?
+  monitor_subchannel = True   # update vim-ipython 'shell' on every send?
+  run_flags= "-i"             # flags for IPython's run magic when using <F5>
+
+Disabling default mappings~
+
+In your own `.vimrc`, if you don't like the mappings provided by default,
+you can define a variable 'let g:ipy_perform_mappings=0' which will prevent
+vim-ipython from defining any of the default mappings.
+
+NEW since IPython 0.12~
+
+By default, vim-ipython activates the custom completefunc globally.
+Sometimes, having a completefunc breaks other plugins' completions. Putting
+the line 'let g:ipy_completefunc = local' in one's vimrc will activate the
+IPython-based completion only for current buffer. Setting 'g:ipy_completefunc'
+to anything other than 'local' or 'global' disables it altogether.
+
+NEW since IPython 0.13~
+
+* Sending ? and ?? now works just like IPython
+
+This is only supported for single lines that end with ? and ??, which works
+just the same as it does in IPython (The ?? variant will show the code, not
+just the docstring
+
+* Sending arbitrary signal to IPython kernel
+
+`:IPythonInterrupt` now supports sending of arbitrary signals. There's a
+convenience alias for sending SIGTERM via `:IPythonTerminate`, but you can
+also send any signal by just passing an argument to `:IPythonInterrupt`.
+Here's an example. First, send this code (or just run it in your kernel):
+>
+    import signal
+    def greeting_user(signum, stack):
+        import sys
+        sys.stdout.flush()
+        print "Hello, USER!"
+        sys.stdout.flush()
+    signal.signal(signal.SIGUSR1, greeting_user)
+
+Now, proceed to connect up using vim-ipython and run `:IPythonInterrupt 10` -
+where 10 happens to be signal.SIGUSR1 in the POSIX world. This functionality,
+along with the sourcing of profile-dependent code on startup (
+`vi `ipython locate profile default`/startup/README` ), brings the forgotten
+world of inter-process communication through signals to your favorite text
+editor and REPL combination.
+
+KNOWN ISSUES						*vim-ipython-issues*
+
+* For now, vim-ipython only connects to an ipython session in progress.
+
+* The standard ipython clients (console, qtconsole, notebook) do not currently
+  display the result of computation which they did not initialize. This means
+  that if you send print statements for execution from within vim, they will
+  only be shown inside the vim-ipython shell buffer, but **not** within any of
+  the standard clients. This is not a limitation of vim-ipython, but a
+  limitation of those built-in clients, see `ipython/ipython#1873
+  <https://github.com/ipython/ipython/issues/1873>`
+
+* The ipdb integration is not yet re-implemented. Pending 
+  [IPython PR #3089](https://github.com/ipython/ipython/pull/3089)
+
+* If <CTRL-S> does not work inside your terminal, but you are able to run
+  some of the other commands successfully (<F5>, for example), try running
+  this command before launching vim in the terminal (add it to your
+  `.bashrc` if it fixes the issue):
+>
+    stty stop undef # to unmap ctrl-s
+
+- In vim, if you're getting `ImportError: No module named
+  IPython.zmq.blockingkernelmanager` but are able to import it in regular
+  python, **either**
+
+  1. your `sys.path` in vim differs from the `sys.path` in regular python.
+     Try running these two lines, and comparing their output files:
+>
+      $vim -c 'py import vim, sys; vim.current.buffer.append(sys.path)' -c\
+        ':wq vim_syspath'
+      $python -c "import sys; f=file('python_syspath','w');\
+        f.write('\n'.join(sys.path)); f.close()"
+<
+  **or**
+
+  2. your vim is compiled against a different python than you are launching.
+     See
+     if there's a difference between :
+>
+      $ vim -c ':py import os; print os.__file__' -c ':q'
+      $ python -c 'import os; print os.__file__'
+
+* For vim inside a terminal, using the arrow keys won't work inside a
+  documentation buffer, because the mapping for <Esc> overlaps with
+  `^[OA` and so on, and we use <Esc> as a quick way of closing the
+  documentation preview window. If you want go without this quick close
+  functionality and want to use the arrow keys instead, look for instructions
+  starting with "Known issue: to enable the use of arrow keys..." in the
+  `get_doc_buffer` function.
+
+* @fholgado's update to `minibufexpl.vim` that is up on GitHub will always
+  put the cursor in the minibuf after sending a command when
+  `monitor_subchannel` is set. This is a bug in minibufexpl.vim and the 
+  workaround is described in vim-ipython issue #7.
+
+* the vim-ipython buffer is set to filetype=python, which provides syntax
+  highlighting, but that syntax highlighting will be broken if a stack trace
+  is returned which contains one half of a quote delimiter.
+
+* vim-ipython is currently for Python2.X only.
+
+ vim:tw=78:ts=8:ft=help:norl:
